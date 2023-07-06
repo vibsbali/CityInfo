@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.StaticFiles;
+
 namespace CityInfo.Api
 {
     public class Program
@@ -17,6 +19,7 @@ namespace CityInfo.Api
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
 
             var app = builder.Build();
 
