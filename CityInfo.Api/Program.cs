@@ -14,7 +14,8 @@ namespace CityInfo.Api
             {
                 //when content negotiation is not supported ie. atom
                 options.ReturnHttpNotAcceptable = true;
-            }).AddXmlDataContractSerializerFormatters(); //this line adds xml support
+            }).AddNewtonsoftJson()
+                .AddXmlDataContractSerializerFormatters(); //this line adds xml support
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();

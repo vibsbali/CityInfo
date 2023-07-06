@@ -1,6 +1,7 @@
 ﻿using CityInfo.API;
+using CityInfo.Api.Code;
 using CityInfo.Api.Models;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.Api.Controllers
@@ -22,7 +23,7 @@ namespace CityInfo.Api.Controllers
             return Ok(city.PointsOfInterest);
         }
 
-        [HttpGet("{pointOfInterestId}")]
+        [HttpGet("{pointOfInterestId}", Name = "GetPointOfInterest")]
         public ActionResult<PointOfInterestDto> GetPointOfInterest(int cityId, int pointOfInterestId)
         {
             var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
@@ -41,5 +42,137 @@ namespace CityInfo.Api.Controllers
 
             return Ok(pointOfInterest);
         }
+
+        [HttpPost]
+        public ActionResult<PointOfInterestDto> CreatePointOfInterest(
+          int cityId, [FromBody] PointOfInterestForCreationDto pointOfInterest) //FromBody is redundant as it is assumed by default
+        {
+            var city = CitiesDataStore.Current.Cities.FirstOrDefault(c => c.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+
+            // demo purposes - to be improved
+            var nextId = CitiesDataStore.Current.Cities
+                            .SelectMany(c => c.PointsOfInterest).Max(p => p.Id)
+                            .IncrementBy(1);
+
+            var finalPointOfInterest = new PointOfInterestDto
+            {
+                Id = nextId,
+                Name = pointOfInterest.Name,
+                Description = pointOfInterest.Description
+            };
+
+            city.PointsOfInterest.Add(finalPointOfInterest);
+
+            //var idx = CitiesDataStore.Current.Cities
+            //    .FindIndex(c => c.Id == cityId);
+
+            //CitiesDataStore.Current.Cities[idx].PointsOfInterest.Add(finalPointOfInterest);
+
+            //GetPointOfInterest is the name we added to the action method above
+            return CreatedAtRoute("GetPointOfInterest",
+                 new
+                 {
+                     cityId = cityId,
+                     pointOfInterestId = finalPointOfInterest.Id
+                 }, finalPointOfInterest);
+        }
+
+        [HttpPut("{pointofinterestid}")]
+        public ActionResult UpdatePointOfInterest(int cityId, int pointOfInterestId,
+            PointOfInterestForUpdateDto pointOfInterest)
+        {
+            var city = CitiesDataStore.Current.Cities
+                .FirstOrDefault(c => c.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+
+            // find point of interest
+            var pointOfInterestFromStore = city.PointsOfInterest
+                .FirstOrDefault(c => c.Id == pointOfInterestId);
+            if (pointOfInterestFromStore == null)
+            {
+                return NotFound();
+            }
+
+            pointOfInterestFromStore.Name = pointOfInterest.Name;
+            pointOfInterestFromStore.Description = pointOfInterest.Description;
+
+            return NoContent();
+        }
+
+
+        [HttpPatch("{pointofinterestid}")]
+        public ActionResult PartiallyUpdatePointOfInterest(
+            int cityId, int pointOfInterestId,
+            JsonPatchDocument<PointOfInterestForUpdateDto> patchDocument)
+        {
+            var city = CitiesDataStore.Current.Cities
+                .FirstOrDefault(c => c.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+
+            var pointOfInterestFromStore = city.PointsOfInterest
+                .FirstOrDefault(c => c.Id == pointOfInterestId);
+            if (pointOfInterestFromStore == null)
+            {
+                return NotFound();
+            }
+
+            var pointOfInterestToPatch =
+                   new PointOfInterestForUpdateDto()
+                   {
+                       Name = pointOfInterestFromStore.Name,
+                       Description = pointOfInterestFromStore.Description
+                   };
+
+            //important to pass ModelState as this will make the errors bubble up
+            patchDocument.ApplyTo(pointOfInterestToPatch, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            //this validation is for validating whether the object after patched would be valid
+            if (!TryValidateModel(pointOfInterestToPatch))
+            {
+                return BadRequest(ModelState);
+            }
+
+            pointOfInterestFromStore.Name = pointOfInterestToPatch.Name;
+            pointOfInterestFromStore.Description = pointOfInterestToPatch.Description;
+
+            return NoContent();
+        }
+
+        [HttpDelete("{pointOfInterestId}")]
+        public ActionResult DeletePointOfInterest(int cityId, int pointOfInterestId)
+        {
+            var city = CitiesDataStore.Current.Cities
+                .FirstOrDefault(c => c.Id == cityId);
+            if (city == null)
+            {
+                return NotFound();
+            }
+
+            var pointOfInterestFromStore = city.PointsOfInterest
+                .FirstOrDefault(c => c.Id == pointOfInterestId);
+            if (pointOfInterestFromStore == null)
+            {
+                return NotFound();
+            }
+
+            city.PointsOfInterest.Remove(pointOfInterestFromStore);
+            return NoContent();
+        }
+
     }
 }
