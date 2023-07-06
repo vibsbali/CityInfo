@@ -8,7 +8,12 @@ namespace CityInfo.Api
 
             // Add services to the container.
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers(options =>
+            {
+                //when content negotiation is not supported ie. atom
+                options.ReturnHttpNotAcceptable = true;
+            }).AddXmlDataContractSerializerFormatters(); //this line adds xml support
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
