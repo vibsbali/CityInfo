@@ -10,6 +10,13 @@ namespace CityInfo.Api.Controllers
     [ApiController]
     public class PointsOfInterestController : ControllerBase
     {
+        private readonly ILogger<PointsOfInterestController> _logger;
+
+        public PointsOfInterestController(ILogger<PointsOfInterestController> logger)
+        {
+            _logger = logger;
+        }
+
         [HttpGet]
         public ActionResult<IEnumerable<PointOfInterestDto>> GetPointsOfInterest(int cityId)
         {
@@ -17,6 +24,7 @@ namespace CityInfo.Api.Controllers
 
             if (city == null)
             {
+                _logger.LogInformation($"City with id {cityId} not found");
                 return NotFound();
             }
 
