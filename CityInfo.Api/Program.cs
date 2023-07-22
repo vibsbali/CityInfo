@@ -1,6 +1,8 @@
 using CityInfo.API;
+using CityInfo.Api.DbContexts;
 using CityInfo.API.Services;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 
@@ -36,6 +38,9 @@ namespace CityInfo.Api
             builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
             builder.Services.AddTransient<IMailService, LocalMailService>();
             builder.Services.AddSingleton<CitiesDataStore>();
+
+            builder.Services.AddDbContext<CityInfoContext>(dbContextOptions =>
+                dbContextOptions.UseSqlite(builder.Configuration["ConnectionStrings:CityInfoDBConnectionString"]));
 
             var app = builder.Build();
 
